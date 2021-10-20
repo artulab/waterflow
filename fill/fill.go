@@ -37,7 +37,6 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 		cell := heap.Pop(&pq).(*raster.Cell)
 		neighbors := raster.NewNeighborIteratorWithCell(out, cell)
 
-		val := *cell.Value
 		for neighbors.Next() {
 			ncell := neighbors.Get()
 
@@ -53,13 +52,12 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 				continue
 			}
 
-			val = math.Max(val, *ncell.Value)
+			val := math.Max(*cell.Value, *ncell.Value)
+			if zLimit == 0 || val-*ncell.Value <= zLimit {
+				*ncell.Value = val
+			}
 			closed.SetWithCell(ncell)
 			heap.Push(&pq, ncell)
-		}
-
-		if zLimit == 0 || val-*cell.Value <= zLimit {
-			*cell.Value = val
 		}
 	}
 
