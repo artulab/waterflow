@@ -1,6 +1,7 @@
 package fill
 
 import (
+	"errors"
 	"math"
 
 	"github.com/artulab/waterflow/container"
@@ -9,11 +10,15 @@ import (
 	"container/heap"
 )
 
-// Fill attempts to correct cells of given inRaster by filling sinks/pits.
+// Fill attempts to correct cells of gi`ven inRaster by filling sinks/pits.
 // zLimit refers to the maximum value between the original cell value and its
 // filled value. Those sinks whose elevation difference is greater than zLimit
 // will not be filled. If the zLimit is zero, all sinks will be filled.
 func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
+	if zLimit < 0 {
+		return nil, errors.New("zLimit is expected to be non-negative")
+	}
+
 	pq := make(container.PriorityQueue, 0)
 	out := raster.CopyRaster(inRaster)
 	closed := raster.NewBitmapWithRaster(out)
