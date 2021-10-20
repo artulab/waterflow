@@ -62,6 +62,11 @@ func NewNeighborIterator(r *Raster, xCenter int, yCenter int) *NeighborIterator 
 	return &i
 }
 
+func NewNeighborIteratorWithCell(r *Raster, c *Cell) *NeighborIterator {
+	i := NewNeighborIterator(r, c.Xindex, c.Yindex)
+	return i
+}
+
 func (it *NeighborIterator) Next() bool {
 	if it.idx >= 7 {
 		it.idx = 8
