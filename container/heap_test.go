@@ -44,6 +44,6 @@ func TestPriorityQueue(t *testing.T) {
 	}
 
 	if expected != actual {
-		t.Error("Priority queue result isn't expected")
+		t.Error("priority queue result isn't expected")
 	}
 }

@@ -48,28 +48,28 @@ func TestBorderIterator(t *testing.T) {
 func testIterator(t *testing.T, iter Iterator, expected []float64) {
 	for _, v := range expected {
 		if iter.Next() != true {
-			t.Error("False returned from Next isn't expected")
+			t.Error("false returned from Next isn't expected")
 		}
 
 		if *iter.Get().Value != v {
-			t.Error("Value returned from Get isn't expected")
+			t.Error("value returned from Get isn't expected")
 		}
 	}
 
 	if iter.Next() != false {
-		t.Error("True returned from Next isn't expected")
+		t.Error("true returned from Next isn't expected")
 	}
 
 	if iter.Error() != nil {
-		t.Error("Iterator error isn't expected")
+		t.Error("iterator error isn't expected")
 	}
 
 	// try to Get an item from the consumed iterator
 	if iter.Get() != nil {
-		t.Error("Value returned from Get isn't expected")
+		t.Error("value returned from Get isn't expected")
 	}
 
 	if iter.Error() == nil {
-		t.Error("Iterator error is expected")
+		t.Error("iterator error is expected")
 	}
 }

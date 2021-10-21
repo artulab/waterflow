@@ -37,8 +37,16 @@ func (r *Raster) Get(x, y int) float64 {
 	return r.Data[y*r.Xsize+x]
 }
 
+func (r *Raster) GetWithCell(c *Cell) float64 {
+	return r.Data[c.Yindex*r.Xsize+c.Xindex]
+}
+
 func (r *Raster) Set(x, y int, val float64) {
 	r.Data[y*r.Xsize+x] = val
+}
+
+func (r *Raster) SetWithCell(c *Cell, val float64) {
+	r.Data[c.Yindex*r.Xsize+c.Xindex] = val
 }
 
 func (r *Raster) IsInRegion(x, y int) bool {
@@ -72,49 +80,49 @@ func (r *Raster) String() string {
 	return sb.String()
 }
 
-type BitMap struct {
+type Bitmap struct {
 	Data  []bool
 	Xsize int
 	Ysize int
 	Size  int
 }
 
-func NewBitmap(xsize, ysize int) *BitMap {
-	bm := BitMap{Data: make([]bool, xsize*ysize), Xsize: xsize, Ysize: ysize,
+func NewBitmap(xsize, ysize int) *Bitmap {
+	bm := Bitmap{Data: make([]bool, xsize*ysize), Xsize: xsize, Ysize: ysize,
 		Size: xsize * ysize}
 	return &bm
 }
 
-func NewBitmapWithRaster(r *Raster) *BitMap {
+func NewBitmapWithRaster(r *Raster) *Bitmap {
 	bm := NewBitmap(r.Xsize, r.Ysize)
 	return bm
 }
 
-func (bm *BitMap) Get(x, y int) bool {
+func (bm *Bitmap) Get(x, y int) bool {
 	return bm.Data[y*bm.Xsize+x]
 }
 
-func (bm *BitMap) GetWithCell(c *Cell) bool {
+func (bm *Bitmap) GetWithCell(c *Cell) bool {
 	return bm.Data[c.Yindex*bm.Xsize+c.Xindex]
 }
 
-func (bm *BitMap) Set(x, y int) {
+func (bm *Bitmap) Set(x, y int) {
 	bm.Data[y*bm.Xsize+x] = true
 }
 
-func (bm *BitMap) SetWithCell(c *Cell) {
+func (bm *Bitmap) SetWithCell(c *Cell) {
 	bm.Data[c.Yindex*bm.Xsize+c.Xindex] = true
 }
 
-func (bm *BitMap) Unset(x, y int) {
+func (bm *Bitmap) Unset(x, y int) {
 	bm.Data[y*bm.Xsize+x] = false
 }
 
-func (bm *BitMap) UnsetWithCell(c *Cell) {
+func (bm *Bitmap) UnsetWithCell(c *Cell) {
 	bm.Data[c.Yindex*bm.Xsize+c.Xindex] = false
 }
 
-func (bm *BitMap) IsInRegion(x, y int) bool {
+func (bm *Bitmap) IsInRegion(x, y int) bool {
 	if (x >= 0 && x < bm.Xsize) && (y >= 0 && y < bm.Ysize) {
 		return true
 	} else {
@@ -122,7 +130,7 @@ func (bm *BitMap) IsInRegion(x, y int) bool {
 	}
 }
 
-func (bm *BitMap) String() string {
+func (bm *Bitmap) String() string {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Xsize\t\t\t%d\n", bm.Xsize))
@@ -132,6 +140,70 @@ func (bm *BitMap) String() string {
 	for y := 0; y < bm.Ysize; y++ {
 		for x := 0; x < bm.Xsize; x++ {
 			sb.WriteString(fmt.Sprintf("%t", bm.Get(x, y)))
+			if x != bm.Xsize-1 {
+				sb.WriteString("\t")
+			}
+		}
+		if y != bm.Ysize-1 {
+			sb.WriteString("\n")
+		}
+	}
+
+	return sb.String()
+}
+
+type Intmap struct {
+	Data  []int
+	Xsize int
+	Ysize int
+	Size  int
+}
+
+func NewIntmap(xsize, ysize int) *Intmap {
+	bm := Intmap{Data: make([]int, xsize*ysize), Xsize: xsize, Ysize: ysize,
+		Size: xsize * ysize}
+	return &bm
+}
+
+func NewIntmapWithRaster(r *Raster) *Intmap {
+	bm := NewIntmap(r.Xsize, r.Ysize)
+	return bm
+}
+
+func (bm *Intmap) Get(x, y int) int {
+	return bm.Data[y*bm.Xsize+x]
+}
+
+func (bm *Intmap) GetWithCell(c *Cell) int {
+	return bm.Data[c.Yindex*bm.Xsize+c.Xindex]
+}
+
+func (bm *Intmap) Set(x, y, val int) {
+	bm.Data[y*bm.Xsize+x] = val
+}
+
+func (bm *Intmap) SetWithCell(c *Cell, val int) {
+	bm.Data[c.Yindex*bm.Xsize+c.Xindex] = val
+}
+
+func (bm *Intmap) IsInRegion(x, y int) bool {
+	if (x >= 0 && x < bm.Xsize) && (y >= 0 && y < bm.Ysize) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (bm *Intmap) String() string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("Xsize\t\t\t%d\n", bm.Xsize))
+	sb.WriteString(fmt.Sprintf("Ysize\t\t\t%d\n", bm.Ysize))
+	sb.WriteString("\n")
+
+	for y := 0; y < bm.Ysize; y++ {
+		for x := 0; x < bm.Xsize; x++ {
+			sb.WriteString(fmt.Sprintf("%d", bm.Get(x, y)))
 			if x != bm.Xsize-1 {
 				sb.WriteString("\t")
 			}
