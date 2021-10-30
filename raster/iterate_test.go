@@ -5,7 +5,7 @@ import (
 )
 
 func TestAllIterator(t *testing.T) {
-	r := NewRaster(2, 1, -9999)
+	r := NewRaster(2, 1, 1, 1, -9999)
 	r.Data = []float64{0, 1}
 
 	expected := []float64{0, 1}
@@ -16,7 +16,7 @@ func TestAllIterator(t *testing.T) {
 }
 
 func TestNeighborIterator(t *testing.T) {
-	r := NewRaster(3, 3, -9999)
+	r := NewRaster(3, 3, 1, 1, -9999)
 	r.Data = []float64{
 		10, 11, 12,
 		13, 14, 15,
@@ -31,7 +31,7 @@ func TestNeighborIterator(t *testing.T) {
 }
 
 func TestBorderIterator(t *testing.T) {
-	r := NewRaster(4, 3, -9999)
+	r := NewRaster(4, 3, 1, 1, -9999)
 	r.Data = []float64{
 		0, 1, 2, 3,
 		4, 5, 6, 7,

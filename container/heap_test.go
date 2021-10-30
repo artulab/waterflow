@@ -8,7 +8,7 @@ import (
 )
 
 func TestPriorityQueue(t *testing.T) {
-	r := raster.NewRaster(3, 3, -9999)
+	r := raster.NewRaster(3, 3, 1, 1, -9999)
 	r.Data = []float64{
 		7, 5, 8,
 		1, 6, 9,

@@ -6,11 +6,13 @@ import (
 )
 
 type Raster struct {
-	Data   []float64
-	Xsize  int
-	Ysize  int
-	Size   int
-	Nodata float64
+	Data      []float64
+	Xsize     int
+	Ysize     int
+	Size      int
+	CellXSize float64
+	CellYSize float64
+	Nodata    float64
 }
 
 type Cell struct {
@@ -19,14 +21,95 @@ type Cell struct {
 	Yindex int
 }
 
-func NewRaster(xsize, ysize int, noData float64) *Raster {
+type Direction int
+
+const (
+	None        Direction = -1
+	Right       Direction = 1
+	BottomRight Direction = 2
+	Bottom      Direction = 4
+	BottomLeft  Direction = 8
+	Left        Direction = 16
+	TopLeft     Direction = 32
+	Top         Direction = 64
+	TopRight    Direction = 128
+)
+
+func (d Direction) IsDiagonal() bool {
+	if d == BottomLeft || d == BottomRight || d == TopLeft || d == TopRight {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (c *Cell) GetValue() float64 {
+	return *c.Value
+}
+
+func (c *Cell) SetValue(val float64) {
+	*c.Value = val
+}
+
+func (c *Cell) EdgeDirection(r *Raster) Direction {
+	if c.Yindex == 0 && c.Xindex == 0 {
+		return TopLeft
+	} else if c.Yindex == 0 && c.Xindex == r.Xsize-1 {
+		return TopRight
+	} else if c.Xindex == 0 && c.Yindex == r.Ysize-1 {
+		return BottomLeft
+	} else if c.Xindex == r.Xsize-1 && c.Yindex == r.Ysize-1 {
+		return BottomRight
+	} else if c.Yindex == 0 {
+		return Top
+	} else if c.Yindex == r.Ysize-1 {
+		return Bottom
+	} else if c.Xindex == 0 {
+		return Left
+	} else if c.Xindex == r.Xsize-1 {
+		return Right
+	} else {
+		return None
+	}
+}
+
+func (c *Cell) RelativeDirection(neighbor *Cell) Direction {
+	currentX := c.Xindex
+	currentY := c.Yindex
+	neighborX := neighbor.Xindex
+	neighborY := neighbor.Yindex
+
+	if neighborY == currentY-1 && neighborX == currentX-1 {
+		return TopLeft
+	} else if neighborY == currentY-1 && neighborX == currentX+1 {
+		return TopRight
+	} else if neighborY == currentY+1 && neighborX == currentX-1 {
+		return BottomLeft
+	} else if neighborY == currentY+1 && neighborX == currentX+1 {
+		return BottomRight
+	} else if neighborY == currentY-1 && neighborX == currentX {
+		return Top
+	} else if neighborY == currentY+1 && neighborX == currentX {
+		return Bottom
+	} else if neighborY == currentY && neighborX == currentX-1 {
+		return Left
+	} else if neighborY == currentY && neighborX == currentX+1 {
+		return Right
+	} else {
+		return None
+	}
+}
+
+func NewRaster(xsize, ysize int, cellXSize, cellYSize, noData float64) *Raster {
 	r := Raster{Data: make([]float64, xsize*ysize), Xsize: xsize, Ysize: ysize,
-		Size: xsize * ysize, Nodata: noData}
+		CellXSize: cellXSize, CellYSize: cellYSize, Size: xsize * ysize,
+		Nodata: noData}
 	return &r
 }
 
 func CopyRaster(r *Raster) *Raster {
-	cr := Raster{Data: make([]float64, r.Xsize*r.Ysize), Xsize: r.Xsize, Ysize: r.Ysize,
+	cr := Raster{Data: make([]float64, r.Xsize*r.Ysize), Xsize: r.Xsize,
+		Ysize: r.Ysize, CellXSize: r.CellXSize, CellYSize: r.CellYSize,
 		Size: r.Xsize * r.Ysize, Nodata: r.Nodata}
 	copy(cr.Data, r.Data)
 
