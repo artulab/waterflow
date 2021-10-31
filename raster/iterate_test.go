@@ -25,7 +25,7 @@ func TestNeighborIterator(t *testing.T) {
 
 	iter := NewNeighborIterator(r, 1, 1)
 
-	expected := []float64{10, 11, 12, 13, 15, 16, 17, 18}
+	expected := []float64{15, 18, 17, 16, 13, 10, 11, 12}
 
 	testIterator(t, iter, expected)
 }

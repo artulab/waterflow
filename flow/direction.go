@@ -14,11 +14,11 @@ const (
 )
 
 func FlowDirection(inRaster *raster.Raster, forceFlow bool,
-	computeDrop bool) (*raster.Raster, *raster.Raster, error) {
+	computeDrop bool) (*raster.Intmap, *raster.Raster, error) {
 
 	out := raster.CopyRaster(inRaster)
-	closed := raster.NewBitmapWithRaster(out)
-	direction := raster.NewIntmapWithRaster(inRaster)
+	slopes := raster.NewRasterWithRaster(inRaster)
+	directions := raster.NewIntmapWithRaster(inRaster)
 
 	// fill one-cell sinks
 	innerRegionIt := raster.NewInnerRegionIterator(inRaster)
@@ -56,21 +56,33 @@ func FlowDirection(inRaster *raster.Raster, forceFlow bool,
 
 	for edges.Next() {
 		cell := edges.Get()
-		closed.SetWithCell(cell)
 
 		if cell.GetValue() == out.Nodata {
-			direction.SetWithCell(cell, int(raster.None))
+			directions.SetWithCell(cell, int(raster.None))
 		} else {
 			if forceFlow {
-				direction.SetWithCell(cell, int(cell.EdgeDirection(out)))
+				directions.SetWithCell(cell, int(cell.EdgeDirection(out)))
+				slopes.SetWithCell(cell, 0)
 			} else {
-				dir, _ := findCellDirection(cell, out)
-				direction.SetWithCell(cell, int(dir))
+				dir, slope := findCellDirection(cell, out)
+				directions.SetWithCell(cell, int(dir))
+				slopes.SetWithCell(cell, slope)
 			}
 		}
 	}
 
-	return nil, nil, nil
+	// compute flow direction of the cell inside of the raster
+	innerRegionIt = raster.NewInnerRegionIterator(out)
+
+	for innerRegionIt.Next() {
+		cell := innerRegionIt.Get()
+
+		dir, slope := findCellDirection(cell, out)
+		directions.SetWithCell(cell, int(dir))
+		slopes.SetWithCell(cell, slope)
+	}
+
+	return directions, slopes, nil
 }
 
 func findCellDirection(c *raster.Cell, r *raster.Raster) (raster.Direction, float64) {
@@ -80,18 +92,19 @@ func findCellDirection(c *raster.Cell, r *raster.Raster) (raster.Direction, floa
 
 	neighbors := raster.NewNeighborIteratorWithCell(r, c)
 
-	dir := raster.None
+	dir := 0
 	steepestSlope := 0.0
 	var slope float64
+
+	downSlopes := [8]float64{-1, -1, -1, -1, -1, -1, -1, -1}
+	nIndex := -1
 
 	for neighbors.Next() {
 		ncell := neighbors.Get()
 
-		if ncell == nil {
-			continue
-		}
+		nIndex++
 
-		if ncell.GetValue() == r.Nodata {
+		if ncell == nil || ncell.GetValue() == r.Nodata {
 			continue
 		}
 
@@ -107,11 +120,22 @@ func findCellDirection(c *raster.Cell, r *raster.Raster) (raster.Direction, floa
 			slope = elevDiff / math.Abs(r.CellYSize)
 		}
 
-		if slope > steepestSlope {
+		if slope >= 0 {
+			downSlopes[nIndex] = slope
+		}
+
+		if slope >= steepestSlope {
 			steepestSlope = slope
-			dir = nDirection
 		}
 	}
 
-	return dir, steepestSlope
+	// combine flow directions if there's multiple
+	// neighbor downslope cells with same elevation
+	for i, val := range downSlopes {
+		if val == steepestSlope {
+			dir |= (1 << i)
+		}
+	}
+
+	return raster.Direction(dir), steepestSlope
 }

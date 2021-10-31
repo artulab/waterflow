@@ -24,7 +24,7 @@ type Cell struct {
 type Direction int
 
 const (
-	None        Direction = -1
+	None        Direction = 0
 	Right       Direction = 1
 	BottomRight Direction = 2
 	Bottom      Direction = 4
@@ -105,6 +105,12 @@ func NewRaster(xsize, ysize int, cellXSize, cellYSize, noData float64) *Raster {
 		CellXSize: cellXSize, CellYSize: cellYSize, Size: xsize * ysize,
 		Nodata: noData}
 	return &r
+}
+
+func NewRasterWithRaster(r *Raster) *Raster {
+	cr := NewRaster(r.Xsize, r.Ysize, r.CellXSize, r.CellYSize, r.Nodata)
+
+	return cr
 }
 
 func CopyRaster(r *Raster) *Raster {

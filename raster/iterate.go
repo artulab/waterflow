@@ -53,8 +53,9 @@ type NeighborIterator struct {
 	err     error
 }
 
-var yNeighborIndices = [8]int{-1, -1, -1, 0, 0, 1, 1, 1}
-var xNeighborIndices = [8]int{-1, 0, 1, -1, 1, -1, 0, 1}
+// the same order as the Direction starting from Right up to TopRight
+var yNeighborIndices = [8]int{0, 1, 1, 1, 0, -1, -1, -1}
+var xNeighborIndices = [8]int{1, 1, 0, -1, -1, -1, 0, 1}
 
 func NewNeighborIterator(r *Raster, xCenter int, yCenter int) *NeighborIterator {
 	i := NeighborIterator{raster: r, idx: -1, xCenter: xCenter,
