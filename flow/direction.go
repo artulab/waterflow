@@ -20,17 +20,51 @@ func FlowDirection(inRaster *raster.Raster, forceFlow bool,
 	closed := raster.NewBitmapWithRaster(out)
 	direction := raster.NewIntmapWithRaster(inRaster)
 
+	// fill one-cell sinks
+	innerRegionIt := raster.NewInnerRegionIterator(inRaster)
+
+	for innerRegionIt.Next() {
+		cell := innerRegionIt.Get()
+
+		if cell.GetValue() == inRaster.Nodata {
+			continue
+		}
+
+		neighbors := raster.NewNeighborIteratorWithCell(inRaster, cell)
+
+		isSink := true
+		filledZ := math.MaxFloat64
+		for neighbors.Next() {
+			ncell := neighbors.Get()
+
+			if ncell.GetValue() == inRaster.Nodata ||
+				ncell.GetValue() <= cell.GetValue() {
+				isSink = false
+				break
+			}
+
+			filledZ = math.Min(filledZ, ncell.GetValue())
+		}
+
+		if isSink {
+			out.SetWithCell(cell, filledZ)
+		}
+	}
+
+	// compute flow direction of the cells on the edge
 	edges := raster.NewBorderIterator(out)
 
 	for edges.Next() {
 		cell := edges.Get()
 		closed.SetWithCell(cell)
 
-		if cell.GetValue() != inRaster.Nodata {
+		if cell.GetValue() == out.Nodata {
+			direction.SetWithCell(cell, int(raster.None))
+		} else {
 			if forceFlow {
-				direction.SetWithCell(cell, int(cell.EdgeDirection(inRaster)))
+				direction.SetWithCell(cell, int(cell.EdgeDirection(out)))
 			} else {
-				dir, _ := findCellDirection(cell, inRaster)
+				dir, _ := findCellDirection(cell, out)
 				direction.SetWithCell(cell, int(dir))
 			}
 		}
