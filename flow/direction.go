@@ -47,7 +47,7 @@ func findCellDirection(c *raster.Cell, r *raster.Raster) (raster.Direction, floa
 	neighbors := raster.NewNeighborIteratorWithCell(r, c)
 
 	dir := raster.None
-	steepestSlope := math.MaxFloat64
+	steepestSlope := 0.0
 	var slope float64
 
 	for neighbors.Next() {

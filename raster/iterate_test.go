@@ -45,6 +45,22 @@ func TestBorderIterator(t *testing.T) {
 	testIterator(t, iter, expected)
 }
 
+func TestInnerRegionIterator(t *testing.T) {
+	r := NewRaster(5, 4, 1, 1, -9999)
+	r.Data = []float64{
+		0, 1, 2, 3, 4,
+		5, 6, 7, 8, 9,
+		10, 11, 12, 13, 14,
+		15, 16, 17, 18, 19,
+	}
+
+	iter := NewInnerRegionIterator(r)
+
+	expected := []float64{6, 7, 8, 11, 12, 13}
+
+	testIterator(t, iter, expected)
+}
+
 func testIterator(t *testing.T, iter Iterator, expected []float64) {
 	for _, v := range expected {
 		if iter.Next() != true {

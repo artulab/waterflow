@@ -152,3 +152,50 @@ func (it *BorderIterator) Get() *Cell {
 func (it *BorderIterator) Error() error {
 	return it.err
 }
+
+type InnerRegionIterator struct {
+	raster *Raster
+	x      int
+	y      int
+	idx    int
+	size   int
+	err    error
+}
+
+func NewInnerRegionIterator(r *Raster) *InnerRegionIterator {
+	i := InnerRegionIterator{raster: r, x: 0, y: 1, idx: -1,
+		size: (r.Xsize * r.Ysize) - 2*(r.Xsize+r.Ysize) + 4}
+	return &i
+}
+
+func (it *InnerRegionIterator) Next() bool {
+	if it.idx >= it.size-1 {
+		it.idx = it.size
+		return false
+	} else {
+		it.idx++
+
+		if it.x < it.raster.Xsize-2 {
+			it.x++
+		} else {
+			it.x = 1
+			it.y++
+		}
+
+		return true
+	}
+}
+
+func (it *InnerRegionIterator) Get() *Cell {
+	if it.idx >= 0 && it.idx < it.size {
+		return &Cell{Value: &it.raster.Data[it.y*it.raster.Xsize+it.x],
+			Xindex: it.x, Yindex: it.y}
+	} else {
+		it.err = io.EOF
+		return nil
+	}
+}
+
+func (it *InnerRegionIterator) Error() error {
+	return it.err
+}
