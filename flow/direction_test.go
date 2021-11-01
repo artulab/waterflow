@@ -21,10 +21,10 @@ func TestFlow(t *testing.T) {
 		t.Error("error isn't expected")
 	}
 
-	expected := []float64{
-		9, 8, 8, 7,
-		8, 7, 7, 8,
-		8, 9, 8, 9,
+	expected := []int{
+		2, 4, 4, 8,
+		1, 1, 16, 16,
+		128, 64, 64, 32,
 	}
 
 	if reflect.DeepEqual(expected, directions.Data) != true {
