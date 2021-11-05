@@ -65,7 +65,14 @@ func FlowDirection(inRaster *raster.Raster, forceFlow bool,
 				slopes.SetWithCell(cell, 0)
 			} else {
 				dir, slope := findCellDirection(cell, out)
-				directions.SetWithCell(cell, int(dir))
+
+				// if can not determine the flow on the edge
+				// force flow outward from the raster
+				if dir == raster.None {
+					directions.SetWithCell(cell, int(cell.EdgeDirection(out)))
+				} else {
+					directions.SetWithCell(cell, int(dir))
+				}
 				slopes.SetWithCell(cell, slope)
 			}
 		}
