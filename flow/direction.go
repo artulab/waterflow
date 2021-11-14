@@ -13,31 +13,41 @@ const (
 	DInf
 )
 
-func FlowDirection(inRaster *raster.Raster, forceFlow bool,
-	computeDrop bool) (*raster.Intmap, *raster.Raster, error) {
+type FlowDirectionParameters struct {
+	InRaster    *raster.Raster
+	ForceFlow   bool
+	ComputeDrop bool
+}
 
-	out := raster.CopyRaster(inRaster)
-	slopes := raster.NewRasterWithRaster(inRaster)
-	directions := raster.NewIntmapWithRaster(inRaster)
+type FlowDirectionResult struct {
+	FlowDirectionRaster *raster.Intmap
+	SlopeRaster         *raster.Raster
+}
+
+func FlowDirection(param FlowDirectionParameters) (*FlowDirectionResult, error) {
+
+	out := raster.CopyRaster(param.InRaster)
+	slopes := raster.NewRasterWithRaster(param.InRaster)
+	directions := raster.NewIntmapWithRaster(param.InRaster)
 
 	// fill one-cell sinks
-	innerRegionIt := raster.NewInnerRegionIterator(inRaster)
+	innerRegionIt := raster.NewInnerRegionIterator(param.InRaster)
 
 	for innerRegionIt.Next() {
 		cell := innerRegionIt.Get()
 
-		if cell.GetValue() == inRaster.Nodata {
+		if cell.GetValue() == param.InRaster.Nodata {
 			continue
 		}
 
-		neighbors := raster.NewNeighborIteratorWithCell(inRaster, cell)
+		neighbors := raster.NewNeighborIteratorWithCell(param.InRaster, cell)
 
 		isSink := true
 		filledZ := math.MaxFloat64
 		for neighbors.Next() {
 			ncell := neighbors.Get()
 
-			if ncell.GetValue() == inRaster.Nodata ||
+			if ncell.GetValue() == param.InRaster.Nodata ||
 				ncell.GetValue() <= cell.GetValue() {
 				isSink = false
 				break
@@ -60,7 +70,7 @@ func FlowDirection(inRaster *raster.Raster, forceFlow bool,
 		if cell.GetValue() == out.Nodata {
 			directions.SetWithCell(cell, int(raster.None))
 		} else {
-			if forceFlow {
+			if param.ForceFlow {
 				directions.SetWithCell(cell, int(cell.EdgeDirection(out)))
 				slopes.SetWithCell(cell, 0)
 			} else {
@@ -89,7 +99,8 @@ func FlowDirection(inRaster *raster.Raster, forceFlow bool,
 		slopes.SetWithCell(cell, slope)
 	}
 
-	return directions, slopes, nil
+	return &FlowDirectionResult{FlowDirectionRaster: directions,
+		SlopeRaster: slopes}, nil
 }
 
 func findCellDirection(c *raster.Cell, r *raster.Raster) (raster.Direction, float64) {

@@ -10,22 +10,31 @@ import (
 	"container/heap"
 )
 
+type FillParameters struct {
+	InRaster *raster.Raster
+	ZLimit   float64
+}
+
+type FillResult struct {
+	FilledRaster *raster.Raster
+}
+
 // Fill attempts to correct cells of gi`ven inRaster by filling sinks/pits.
 // zLimit refers to the maximum elevation different between the sink and its
 // pour point. Those sinks whose elevation difference is greater than zLimit
 // will not be filled. If the zLimit is zero, all sinks will be filled.
-func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
-	if zLimit < 0 {
+func Fill(param FillParameters) (*FillResult, error) {
+	if param.ZLimit < 0 {
 		return nil, errors.New("zLimit is expected to be non-negative")
 	}
 
 	pq := make(container.PriorityQueue, 0)
-	out := raster.CopyRaster(inRaster)
+	out := raster.CopyRaster(param.InRaster)
 	closed := raster.NewBitmapWithRaster(out)
 	edges := raster.NewBorderIterator(out)
 
 	var sinks *raster.Bitmap = nil
-	if zLimit > 0 {
+	if param.ZLimit > 0 {
 		sinks = raster.NewBitmapWithRaster(out)
 	}
 
@@ -33,7 +42,7 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 		cell := edges.Get()
 		closed.SetWithCell(cell)
 
-		if *cell.Value != inRaster.Nodata {
+		if *cell.Value != param.InRaster.Nodata {
 			heap.Push(&pq, cell)
 		}
 	}
@@ -49,7 +58,7 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 				continue
 			}
 
-			if *ncell.Value == inRaster.Nodata {
+			if *ncell.Value == param.InRaster.Nodata {
 				continue
 			}
 
@@ -60,7 +69,7 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 			val := math.Max(*cell.Value, *ncell.Value)
 			*ncell.Value = val
 
-			if zLimit > 0 && val != inRaster.GetWithCell(ncell) {
+			if param.ZLimit > 0 && val != param.InRaster.GetWithCell(ncell) {
 				sinks.SetWithCell(ncell)
 			}
 
@@ -69,7 +78,7 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 		}
 	}
 
-	if zLimit > 0 {
+	if param.ZLimit > 0 {
 		// find connected cells in the sink
 		label := 0
 		maxelev := make([]float64, 0)
@@ -101,10 +110,10 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 					// store the max elevation difference for the sink
 					if len(maxelev) < label {
 						maxelev = append(maxelev,
-							*scell.Value-inRaster.GetWithCell(scell))
+							*scell.Value-param.InRaster.GetWithCell(scell))
 					} else {
 						maxelev[label-1] = math.Max(maxelev[label-1],
-							*scell.Value-inRaster.GetWithCell(scell))
+							*scell.Value-param.InRaster.GetWithCell(scell))
 					}
 
 					neighbors := raster.NewNeighborIteratorWithCell(out, scell)
@@ -131,7 +140,7 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 
 			// undo elevations for the sinks whose maximum elevation difference
 			// is greater zLimit
-			if maxdiff >= zLimit {
+			if maxdiff >= param.ZLimit {
 				stack := container.NewStack()
 				stack.Push(head)
 
@@ -148,7 +157,7 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 						continue
 					}
 
-					*scell.Value = inRaster.GetWithCell(scell)
+					*scell.Value = param.InRaster.GetWithCell(scell)
 					closed.SetWithCell(scell)
 
 					neighbors := raster.NewNeighborIteratorWithCell(out, scell)
@@ -167,5 +176,5 @@ func Fill(inRaster *raster.Raster, zLimit float64) (*raster.Raster, error) {
 		}
 	}
 
-	return out, nil
+	return &FillResult{FilledRaster: out}, nil
 }

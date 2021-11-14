@@ -15,7 +15,8 @@ func TestFill(t *testing.T) {
 		8, 9, 8, 9,
 	}
 
-	out, err := Fill(r, 0)
+	params := FillParameters{InRaster: r, ZLimit: 0}
+	out, err := Fill(params)
 
 	if err != nil {
 		t.Error("error isn't expected")
@@ -27,7 +28,7 @@ func TestFill(t *testing.T) {
 		8, 9, 8, 9,
 	}
 
-	if reflect.DeepEqual(expected, out.Data) != true {
+	if reflect.DeepEqual(expected, out.FilledRaster.Data) != true {
 		t.Error("fill result isn't expected")
 	}
 }
@@ -40,7 +41,8 @@ func TestFillWithZLimit(t *testing.T) {
 		8, 9, 8, 9,
 	}
 
-	out, err := Fill(r, 4)
+	params := FillParameters{InRaster: r, ZLimit: 4}
+	out, err := Fill(params)
 
 	if err != nil {
 		t.Error("error isn't expected")
@@ -52,7 +54,7 @@ func TestFillWithZLimit(t *testing.T) {
 		8, 9, 8, 9,
 	}
 
-	if reflect.DeepEqual(expected, out.Data) != true {
+	if reflect.DeepEqual(expected, out.FilledRaster.Data) != true {
 		t.Error("fill result isn't expected")
 	}
 }
@@ -65,7 +67,8 @@ func TestFillWithZLimitAnd2Sinks(t *testing.T) {
 		8, 9, 8, 9, 8, 9, 7,
 	}
 
-	out, err := Fill(r, 4)
+	params := FillParameters{InRaster: r, ZLimit: 4}
+	out, err := Fill(params)
 
 	if err != nil {
 		t.Error("error isn't expected")
@@ -77,7 +80,7 @@ func TestFillWithZLimitAnd2Sinks(t *testing.T) {
 		8, 9, 8, 9, 8, 9, 7,
 	}
 
-	if reflect.DeepEqual(expected, out.Data) != true {
+	if reflect.DeepEqual(expected, out.FilledRaster.Data) != true {
 		t.Error("fill result isn't expected")
 	}
 }
@@ -90,7 +93,8 @@ func TestFillWithZLimitAnd2SinksEdgeCase(t *testing.T) {
 		8, 9, 8, 9, 8, 9, 7,
 	}
 
-	out, err := Fill(r, 4)
+	params := FillParameters{InRaster: r, ZLimit: 4}
+	out, err := Fill(params)
 
 	if err != nil {
 		t.Error("error isn't expected")
@@ -102,7 +106,7 @@ func TestFillWithZLimitAnd2SinksEdgeCase(t *testing.T) {
 		8, 9, 8, 9, 8, 9, 7,
 	}
 
-	if reflect.DeepEqual(expected, out.Data) != true {
+	if reflect.DeepEqual(expected, out.FilledRaster.Data) != true {
 		t.Error("fill result isn't expected")
 	}
 }
@@ -115,7 +119,8 @@ func TestFillWithZLimitAnd2SinksAllFilled(t *testing.T) {
 		8, 9, 8, 9, 8, 9, 7,
 	}
 
-	out, err := Fill(r, 4)
+	params := FillParameters{InRaster: r, ZLimit: 4}
+	out, err := Fill(params)
 
 	if err != nil {
 		t.Error("error isn't expected")
@@ -127,7 +132,7 @@ func TestFillWithZLimitAnd2SinksAllFilled(t *testing.T) {
 		8, 9, 8, 9, 8, 9, 7,
 	}
 
-	if reflect.DeepEqual(expected, out.Data) != true {
+	if reflect.DeepEqual(expected, out.FilledRaster.Data) != true {
 		t.Error("fill result isn't expected")
 	}
 }
@@ -140,7 +145,8 @@ func TestFillWithZLimitNoChange(t *testing.T) {
 		8, 9, 8, 9,
 	}
 
-	out, err := Fill(r, 4)
+	params := FillParameters{InRaster: r, ZLimit: 4}
+	out, err := Fill(params)
 
 	if err != nil {
 		t.Error("error isn't expected")
@@ -152,7 +158,7 @@ func TestFillWithZLimitNoChange(t *testing.T) {
 		8, 9, 8, 9,
 	}
 
-	if reflect.DeepEqual(expected, out.Data) != true {
+	if reflect.DeepEqual(expected, out.FilledRaster.Data) != true {
 		t.Error("fill queue result isn't expected")
 	}
 }
