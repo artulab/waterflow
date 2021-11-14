@@ -14,9 +14,10 @@ const (
 )
 
 type FlowDirectionParameters struct {
-	InRaster    *raster.Raster
-	ForceFlow   bool
-	ComputeDrop bool
+	InRaster                *raster.Raster
+	ForceFlow               bool
+	ComputeDrop             bool
+	SkipFillingOneCellSinks bool
 }
 
 type FlowDirectionResult struct {
@@ -24,62 +25,70 @@ type FlowDirectionResult struct {
 	SlopeRaster         *raster.Raster
 }
 
+// Development in progress!
 func FlowDirection(param FlowDirectionParameters) (*FlowDirectionResult, error) {
 
-	out := raster.CopyRaster(param.InRaster)
 	slopes := raster.NewRasterWithRaster(param.InRaster)
 	directions := raster.NewIntmapWithRaster(param.InRaster)
 
-	// fill one-cell sinks
-	innerRegionIt := raster.NewInnerRegionIterator(param.InRaster)
+	var inRaster *raster.Raster
 
-	for innerRegionIt.Next() {
-		cell := innerRegionIt.Get()
+	if param.SkipFillingOneCellSinks {
+		inRaster = param.InRaster
+	} else {
+		inRaster = raster.CopyRaster(param.InRaster)
 
-		if cell.GetValue() == param.InRaster.Nodata {
-			continue
-		}
+		// fill one-cell sinks
+		innerRegionIt := raster.NewInnerRegionIterator(param.InRaster)
 
-		neighbors := raster.NewNeighborIteratorWithCell(param.InRaster, cell)
+		for innerRegionIt.Next() {
+			cell := innerRegionIt.Get()
 
-		isSink := true
-		filledZ := math.MaxFloat64
-		for neighbors.Next() {
-			ncell := neighbors.Get()
-
-			if ncell.GetValue() == param.InRaster.Nodata ||
-				ncell.GetValue() <= cell.GetValue() {
-				isSink = false
-				break
+			if cell.GetValue() == param.InRaster.Nodata {
+				continue
 			}
 
-			filledZ = math.Min(filledZ, ncell.GetValue())
-		}
+			neighbors := raster.NewNeighborIteratorWithCell(param.InRaster, cell)
 
-		if isSink {
-			out.SetWithCell(cell, filledZ)
+			isSink := true
+			filledZ := math.MaxFloat64
+			for neighbors.Next() {
+				ncell := neighbors.Get()
+
+				if ncell.GetValue() == param.InRaster.Nodata ||
+					ncell.GetValue() <= cell.GetValue() {
+					isSink = false
+					break
+				}
+
+				filledZ = math.Min(filledZ, ncell.GetValue())
+			}
+
+			if isSink {
+				inRaster.SetWithCell(cell, filledZ)
+			}
 		}
 	}
 
 	// compute flow direction of the cells on the edge
-	edges := raster.NewBorderIterator(out)
+	edges := raster.NewBorderIterator(inRaster)
 
 	for edges.Next() {
 		cell := edges.Get()
 
-		if cell.GetValue() == out.Nodata {
+		if cell.GetValue() == inRaster.Nodata {
 			directions.SetWithCell(cell, int(raster.None))
 		} else {
 			if param.ForceFlow {
-				directions.SetWithCell(cell, int(cell.EdgeDirection(out)))
+				directions.SetWithCell(cell, int(cell.EdgeDirection(inRaster)))
 				slopes.SetWithCell(cell, 0)
 			} else {
-				dir, slope := findCellDirection(cell, out)
+				dir, slope := findCellDirection(cell, inRaster)
 
 				// if can not determine the flow on the edge
 				// force flow outward from the raster
 				if dir == raster.None {
-					directions.SetWithCell(cell, int(cell.EdgeDirection(out)))
+					directions.SetWithCell(cell, int(cell.EdgeDirection(inRaster)))
 				} else {
 					directions.SetWithCell(cell, int(dir))
 				}
@@ -89,12 +98,12 @@ func FlowDirection(param FlowDirectionParameters) (*FlowDirectionResult, error) 
 	}
 
 	// compute flow direction of the cell inside of the raster
-	innerRegionIt = raster.NewInnerRegionIterator(out)
+	innerRegionIt := raster.NewInnerRegionIterator(inRaster)
 
 	for innerRegionIt.Next() {
 		cell := innerRegionIt.Get()
 
-		dir, slope := findCellDirection(cell, out)
+		dir, slope := findCellDirection(cell, inRaster)
 		directions.SetWithCell(cell, int(dir))
 		slopes.SetWithCell(cell, slope)
 	}
