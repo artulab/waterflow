@@ -19,8 +19,8 @@ type FillResult struct {
 	FilledRaster *raster.Raster
 }
 
-// Fill attempts to correct cells of gi`ven inRaster by filling sinks/pits.
-// zLimit refers to the maximum elevation different between the sink and its
+// Fill attempts to correct cells of given inRaster by filling sinks/pits.
+// zLimit refers to the maximum elevation difference between the sink and its
 // pour point. Those sinks whose elevation difference is greater than zLimit
 // will not be filled. If the zLimit is zero, all sinks will be filled.
 func Fill(param FillParameters) (*FillResult, error) {
